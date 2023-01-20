@@ -114,7 +114,7 @@ def transform(df):
 
     df=df.loc[df["Asumistyyppi"]!="Asumisoikeus"]
 
-    df["Hoitovastike/m2"]=df["Hoitovastike"]/df["Asuinpinta_ala"]
+    df["Hoitovastike_m2"]=df["Hoitovastike"]/df["Asuinpinta_ala"]
 
     return df
 
@@ -165,6 +165,19 @@ def upsert():
 
     conn.commit()
     conn.close()
+
+def load_aggregates(df):
+
+    df_aggregates=df.describe()
+    df_aggregates.reset_index(inplace=True)
+    df_aggregates=df_aggregates.rename(columns = {'index':'metric'})
+    conn=sqlite3.connect('oikotie.db')
+
+    df.to_sql("aggregates_by_date", conn, if_exists="append", index=False)
+    conn.commit()
+    conn.close()
+
+
 
 
 ##Utils
