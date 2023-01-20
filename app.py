@@ -9,7 +9,7 @@ from pandas.api.types import (
     is_object_dtype,
 )
 
-
+##
 conn=sqlite3.connect('oikotie.db')
 
 sql='''select * from asunnot'''

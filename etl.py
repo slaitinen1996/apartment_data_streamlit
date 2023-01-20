@@ -25,7 +25,7 @@ def get_links():
     links_to_scrape=[]
     driver = webdriver.Chrome(executable_path=DRIVER_PATH)
 
-    for page in range(1, 2):
+    for page in range(1, 10):
         
         driver.get('https://asunnot.oikotie.fi/myytavat-asunnot/helsinki?pagination='+ str(page))
 
@@ -112,7 +112,9 @@ def transform(df):
 
     df=df[columns_selected]
 
-    df=df.loc[df["Asumistyyppi"]=="Asumisoikeus"]
+    df=df.loc[df["Asumistyyppi"]!="Asumisoikeus"]
+
+    df["Hoitovastike/m2"]=df["Hoitovastike"]/df["Asuinpinta_ala"]
 
     return df
 
@@ -133,7 +135,7 @@ def extract():
             print(countt)
         except:
             errors+=1
-            print(errors)
+            print(f'errors {errors}')
     return df
 
 
@@ -175,14 +177,15 @@ def to_float(df, columns):
         '\s+': '',
         ',':'.',
         '/kk': '',
-        ' m2': ''
+        ' ': ''
         }
 
     for column in columns:
         
         df[column] = df[column].astype(str).str.replace(' ', '').replace(replacement, regex=True).astype(float)
 
-    ##df['Kerros']=df['Kerros'].astype(str).str.split('/').str[0]
+    df['Kerros']=df['Kerros'].astype(str).str.split('/').str[0].astype(float)
+    df['Asuinpinta_ala']=df['Asuinpinta_ala'].astype(str).str.split(' ').str[0].str.replace(',', '.').astype(float)
 
     return df
 
