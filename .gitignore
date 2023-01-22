@@ -2,3 +2,4 @@ main.py
 etl.py
 create_db.py
 ideas.txt
+*.sql
