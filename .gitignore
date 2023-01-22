@@ -1,7 +1,2 @@
 main.py
 etl.py
-
-!.gitignore
-!app.py
-!oikotie.db
-!requirements.txt
