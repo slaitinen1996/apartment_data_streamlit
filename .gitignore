@@ -1,5 +1,6 @@
-main.py
-etl.py
-create_db.py
-ideas.txt
-*.sql
+*
+
+!.gitignore
+!oikotie.db
+!requirements.txt
+!app.py
