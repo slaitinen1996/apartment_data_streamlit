@@ -3,3 +3,4 @@
 !.gitignore
 !app.py
 !oikotie.db
+!requirements.txt
