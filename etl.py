@@ -8,6 +8,9 @@ from selenium.webdriver.common.by import By
 import time
 import pandas as pd
 import numpy as np
+import random
+
+
 
 def get_number_of_pages(url):
     r = requests.get(url)
@@ -25,11 +28,11 @@ def get_links():
     links_to_scrape=[]
     driver = webdriver.Chrome(executable_path=DRIVER_PATH)
 
-    for page in range(1, 10):
+    for page in range(1, 4):
         
         driver.get('https://asunnot.oikotie.fi/myytavat-asunnot/helsinki?pagination='+ str(page))
 
-        time.sleep(2)
+        time.sleep(0.5)
 
         lnks = driver.find_elements(By.CLASS_NAME, "ot-card-v2")
         # traverse list
@@ -43,9 +46,10 @@ def get_links():
     
 
 # Making a GET request
-def get_data(link):
+def get_data(link, headers):
 
-    r = requests.get(link)
+
+    r = requests.get(link, headers= headers)
     
     soup = BeautifulSoup(r.content, 'html.parser')
     data=soup.select(".info-table__row")
@@ -57,7 +61,8 @@ def get_data(link):
             value=j.text.strip()
             items[title]=value
             items['link']=link
-            
+    print(items)
+    print(r)
     return items
 
 
@@ -113,27 +118,32 @@ def transform(df):
     df=df[columns_selected]
 
     df=df.loc[df["Asumistyyppi"]!="Asumisoikeus"]
+    df=df.loc[df["Huoneita"]<4]
 
     df["Hoitovastike_m2"]=df["Hoitovastike"]/df["Asuinpinta_ala"]
 
     return df
 
 
-def extract():
+def extract(links_to_scrape):
+
+    headers = ({'User-Agent':
+            'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36'})
     df=pd.DataFrame()
-    links_to_scrape=get_links()
     countt=0
     errors=0
     for link in links_to_scrape:
     ## append dict to df
-        time.sleep(0.1)
+
+        time.sleep(random.randint(1,2))
         try:
-            data=pd.DataFrame([get_data(link)])
+            data=pd.DataFrame([get_data(link, headers)])
 
             df=df.append(data)
             countt+=1
             print(countt)
-        except:
+        except Exception as e:
+            print(e)
             errors+=1
             print(f'errors {errors}')
     return df
@@ -153,13 +163,13 @@ def upsert():
 
     c.execute('''UPDATE asunnot
                 SET (status, myyntikesto) =('myyty', datetime('now')-pvm)
-                WHERE asunnot.id IN (select a.id as id from asunnot a
+                WHERE asunnot.id IN (select a.id as id from oikotie_asunnot a
                 left join stg_asunnot sa on a.id=sa.id
                 where sa.id IS NULL);''')
 
     c.execute('''INSERT INTO asunnot
-                WITH RECURSIVE uudet as (select sa.* from stg_asunnot sa 
-                left join asunnot a on sa.id=a.id
+                WITH RECURSIVE uudet as (select sa.* from stg_oikotie_asunnot sa 
+                left join oikotie_asunnot a on sa.id=a.id
                 where a.id IS NULL)
                 SELECT * FROM uudet;''')
 
@@ -171,9 +181,10 @@ def load_aggregates(df):
     df_aggregates=df.describe()
     df_aggregates.reset_index(inplace=True)
     df_aggregates=df_aggregates.rename(columns = {'index':'metric'})
+    df_aggregates["pvm"]=date.today()
     conn=sqlite3.connect('oikotie.db')
 
-    df.to_sql("aggregates_by_date", conn, if_exists="append", index=False)
+    df.to_sql("asunnot_history", conn, if_exists="append", index=False)
     conn.commit()
     conn.close()
 
@@ -195,12 +206,14 @@ def to_float(df, columns):
 
     for column in columns:
         
-        df[column] = df[column].astype(str).str.replace(' ', '').replace(replacement, regex=True).astype(float)
+        df[column] = pd.to_numeric(df[column].astype(str).str.replace(' ', '').replace(replacement, regex=True), errors='coerce').fillna(np.NaN).astype(float)
 
     df['Kerros']=df['Kerros'].astype(str).str.split('/').str[0].astype(float)
     df['Asuinpinta_ala']=df['Asuinpinta_ala'].astype(str).str.split(' ').str[0].str.replace(',', '.').astype(float)
 
     return df
+
+   
 
     
 

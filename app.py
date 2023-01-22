@@ -12,7 +12,7 @@ from pandas.api.types import (
 ##
 conn=sqlite3.connect('oikotie.db')
 
-sql='''select * from asunnot'''
+sql='''select * from oikotie_asunnot'''
 
 def filter_dataframe(df: pd.DataFrame, keys) -> pd.DataFrame:
     modify = st.checkbox("Add filters", key=keys[0])
