@@ -343,7 +343,7 @@ df=pd.read_sql(sql, conn, parse_dates=["pvm"])
 date=df.iloc[2]['pvm']
 
 st.set_page_config(layout="wide")
-st.title("Explore statistics for apartments for sale in Helsinki")
+st.title("Apartments for sale in Helsinki")
 st.subheader(f'Last update date: {date}')
 col1, col2= st.columns(2)
 checkbox1 = col1.checkbox("Add filters for dataset 1")
