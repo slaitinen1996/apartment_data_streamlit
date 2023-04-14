@@ -340,7 +340,8 @@ keys_2=[i for i in range(31,60)]
 
 
 df=pd.read_sql(sql, conn, parse_dates=["pvm"])
-date=df.iloc[2]['pvm']
+##date=df.iloc[2]['pvm']
+date='26.03.2023'
 
 st.set_page_config(layout="wide")
 st.title("Apartments for sale in Helsinki")
